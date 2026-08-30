@@ -34,6 +34,17 @@ Leader is Space. Press it and wait to get the which-key menu.
 
 Claude Code integration is `coder/claudecode.nvim` and expects the `claude` CLI on PATH.
 
+## kitty
+
+Installed without root by the official installer, which drops it in `~/.local/kitty.app`:
+
+```bash
+curl -L https://sw.kovidgoyal.net/kitty/installer.sh | sh /dev/stdin launch=n
+ln -sfn ~/.local/kitty.app/bin/kitty ~/.local/bin/kitty
+```
+
+Config uses JetBrainsMono Nerd Font and the tokyonight palette so it matches nvim and the i3 bar. i3 is set to use it as `$term`.
+
 ## i3
 
 X11 only, so an X server has to be present:

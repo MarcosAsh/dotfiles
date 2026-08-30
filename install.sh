@@ -25,6 +25,7 @@ link() {
 link nvim
 link i3
 link i3status
+link kitty
 
 echo
 echo "Done. Neovim will install its plugins on first launch."
