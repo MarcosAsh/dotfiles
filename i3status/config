@@ -1,0 +1,56 @@
+general {
+        colors = true
+        color_good = "#9ece6a"
+        color_degraded = "#e0af68"
+        color_bad = "#f7768e"
+        interval = 5
+}
+
+order += "wireless wlp170s0"
+order += "ethernet enxd0c1b53f2ae5"
+order += "volume master"
+order += "disk /"
+order += "load"
+order += "battery 1"
+order += "tztime local"
+
+wireless wlp170s0 {
+        format_up = "W: %essid (%quality)"
+        format_down = "W: down"
+}
+
+ethernet enxd0c1b53f2ae5 {
+        format_up = "E: %ip"
+        format_down = ""
+}
+
+volume master {
+        format = "vol %volume"
+        format_muted = "vol muted"
+        device = "default"
+        mixer = "Master"
+        mixer_idx = 0
+}
+
+disk "/" {
+        format = "disk %avail"
+}
+
+load {
+        format = "load %1min"
+}
+
+battery 1 {
+        format = "%status %percentage %remaining"
+        status_chr = "chr"
+        status_bat = "bat"
+        status_full = "full"
+        status_idle = "idle"
+        low_threshold = 15
+        threshold_type = percentage
+        integer_battery_capacity = true
+}
+
+tztime local {
+        format = "%a %d %b  %H:%M"
+}
