@@ -169,5 +169,11 @@ bar {
 # --- autostart ---
 exec_always --no-startup-id feh --bg-fill ~/Pictures/wallpapers/wp13008112.jpg
 exec --no-startup-id dunst
+# keep the screen awake: no blanking, no DPMS power-off
+exec_always --no-startup-id xset s off -dpms
 exec --no-startup-id xss-lock --transfer-sleep-lock -- i3lock --nofork -c 1a1b26
 exec --no-startup-id nm-applet
+
+# --- displays ---
+# docked: monitor only, laptop screen off. undocked: laptop screen back on.
+exec_always --no-startup-id ~/.local/bin/display-watch

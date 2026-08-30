@@ -1,0 +1,113 @@
+#!/usr/bin/env bash
+# Pick a display layout, and the font DPI that suits it.
+#   auto     external monitor only if one is plugged in, laptop screen otherwise (default)
+#            also clears any override set by the modes below
+#   monitor  external only, laptop screen off
+#   laptop   laptop screen only, externals off
+#   both     laptop screen plus externals to its right
+#
+# monitor/laptop/both stick until you actually dock or undock.
+#
+# Only one screen is ever lit, so a single global DPI per mode is enough:
+# the laptop panel is ~257 dpi, the desk monitor ~110 dpi.
+set -uo pipefail
+
+export DISPLAY="${DISPLAY:-:0}"
+WALLPAPER="$HOME/Pictures/wallpapers/wp13008112.jpg"
+LAPTOP_DPI=144   # 1.5x, so the laptop panel reads like 1920x1280
+DOCKED_DPI=96    # the monitor is close to 96 dpi already
+
+# hotplugs arrive in bursts, so only one of these runs at a time
+exec 9>"${XDG_RUNTIME_DIR:-/tmp}/display-auto.lock"
+flock 9
+
+internal=$(xrandr --query | awk '/^(eDP|LVDS|DSI)/ {print $1; exit}')
+[ -n "$internal" ] || internal=eDP-1
+
+mapfile -t externals < <(xrandr --query | awk '/ connected/ {print $1}' | grep -vx "$internal")
+
+# A mode asked for by hand sticks until the cable situation actually changes,
+# so the hotplug watcher calling us with "auto" cannot undo it a moment later.
+STATE="${XDG_RUNTIME_DIR:-/tmp}/display-auto.state"
+sig=$(printf '%s\n' "${externals[@]}" | sort | tr '\n' ',')
+
+mode="${1:-auto}"
+case "$mode" in
+    auto|hotplug|monitor|laptop|both) ;;
+    *) echo "usage: ${0##*/} [auto|hotplug|monitor|laptop|both]" >&2; exit 2 ;;
+esac
+
+case "$mode" in
+    hotplug)                            # how the watcher calls us
+        mode=auto
+        if [ -r "$STATE" ]; then
+            read -r saved_mode saved_sig < "$STATE"
+            if [ "$saved_sig" = "$sig" ]; then
+                mode="$saved_mode"      # honour the override, nothing was plugged or unplugged
+            else
+                rm -f "$STATE"          # real dock or undock, back to deciding for ourselves
+            fi
+        fi
+        ;;
+    auto)  rm -f "$STATE" ;;            # asked for by hand: forget any override
+    *)     printf '%s %s\n' "$mode" "$sig" > "$STATE" ;;
+esac
+
+case "$mode" in
+    auto)    [ "${#externals[@]}" -gt 0 ] && mode=monitor || mode=laptop ;;
+    monitor) [ "${#externals[@]}" -gt 0 ] || mode=laptop ;;
+esac
+
+# what should end up switched on
+case "$mode" in
+    monitor) wanted=("${externals[@]}"); dpi=$DOCKED_DPI ;;
+    laptop)  wanted=("$internal");       dpi=$LAPTOP_DPI ;;
+    both)    wanted=("$internal" "${externals[@]}"); dpi=$DOCKED_DPI ;;
+esac
+
+# --- outputs -------------------------------------------------------------
+# skip the xrandr call if that is already the picture, to avoid pointless flicker
+active=$(xrandr --listmonitors | awk 'NR > 1 {print $NF}' | sort | tr '\n' ' ')
+desired=$(printf '%s\n' "${wanted[@]}" | sort | tr '\n' ' ')
+
+if [ "$active" != "$desired" ]; then
+    args=()
+    prev=""
+    if [ "$mode" != monitor ]; then
+        args+=(--output "$internal" --auto --primary --pos 0x0)
+        prev="$internal"
+    fi
+    for out in "${externals[@]}"; do
+        if [ "$mode" = laptop ]; then
+            args+=(--output "$out" --off)
+            continue
+        fi
+        args+=(--output "$out" --auto)
+        if [ -n "$prev" ]; then
+            args+=(--right-of "$prev")
+        else
+            args+=(--primary --pos 0x0)   # first external drives the i3 tray
+        fi
+        prev="$out"
+    done
+    [ "$mode" = monitor ] && args+=(--output "$internal" --off)
+
+    xrandr "${args[@]}" || exit 1
+
+    # the root window changed size, so the wallpaper needs redrawing
+    [ -r "$WALLPAPER" ] && feh --bg-fill "$WALLPAPER" >/dev/null 2>&1
+
+    command -v notify-send >/dev/null && notify-send -u low -t 2000 "Display: $mode" "$desired"
+fi
+
+# --- font scaling --------------------------------------------------------
+# Only touch DPI when it actually changes: the i3 restart below would
+# otherwise be able to retrigger this script.
+current_dpi=$(xrdb -query 2>/dev/null | awk -F: '/^Xft\.dpi/ {gsub(/[^0-9]/, "", $2); print $2}')
+if [ "${current_dpi:-0}" != "$dpi" ]; then
+    printf 'Xft.dpi: %s\n' "$dpi" | xrdb -merge
+    # in-place restart, keeps every window: makes i3 and its bar pick up the new DPI
+    pgrep -x i3 >/dev/null && i3-msg restart >/dev/null 2>&1
+fi
+
+exit 0

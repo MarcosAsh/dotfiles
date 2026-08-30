@@ -1,0 +1,20 @@
+#!/usr/bin/env bash
+# Re-apply the display layout whenever X reports a monitor being plugged or unplugged.
+# Started from the i3 config; only ever one instance.
+set -uo pipefail
+
+export DISPLAY="${DISPLAY:-:0}"
+AUTO="$HOME/.local/bin/display-auto"
+
+exec 9>"${XDG_RUNTIME_DIR:-/tmp}/display-watch.lock"
+flock -n 9 || exit 0   # already watching (i3 restart re-runs exec_always)
+
+"$AUTO" hotplug
+
+# 9>&- keeps the lock off the children, so a stray xev can never hold it
+xev -root -event randr 2>/dev/null 9>&- |
+    grep --line-buffered -E 'RRScreenChangeNotify|RRNotify' 9>&- |
+    while read -r _; do
+        while read -r -t 0.5 _; do :; done   # swallow the rest of the burst
+        "$AUTO" hotplug
+    done
