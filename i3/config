@@ -167,6 +167,7 @@ bar {
 }
 
 # --- autostart ---
+exec_always --no-startup-id feh --bg-fill ~/Pictures/wallpapers/wp13008112.jpg
 exec --no-startup-id dunst
 exec --no-startup-id xss-lock --transfer-sleep-lock -- i3lock --nofork -c 1a1b26
 exec --no-startup-id nm-applet
