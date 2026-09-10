@@ -42,3 +42,16 @@ vim.api.nvim_create_autocmd("TextYankPost", {
   group = vim.api.nvim_create_augroup("highlight_yank", { clear = true }),
   callback = function() vim.hl.on_yank() end,
 })
+
+-- Autosave: write the buffer whenever you leave insert mode, change text in
+-- normal mode, switch buffer, or the terminal loses focus. `update` only
+-- writes if the buffer is actually modified. Skips unnamed and special buffers.
+vim.api.nvim_create_autocmd({ "InsertLeave", "TextChanged", "BufLeave", "FocusLost" }, {
+  group = vim.api.nvim_create_augroup("autosave", { clear = true }),
+  callback = function(ev)
+    local buf = ev.buf
+    if vim.bo[buf].buftype ~= "" or not vim.bo[buf].modifiable or vim.bo[buf].readonly then return end
+    if vim.api.nvim_buf_get_name(buf) == "" then return end
+    vim.api.nvim_buf_call(buf, function() vim.cmd("silent! update") end)
+  end,
+})
