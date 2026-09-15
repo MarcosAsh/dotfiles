@@ -173,6 +173,7 @@ exec --no-startup-id dunst
 exec_always --no-startup-id xset s off -dpms
 exec --no-startup-id xss-lock --transfer-sleep-lock -- i3lock --nofork -c 1a1b26
 exec --no-startup-id nm-applet
+exec --no-startup-id blueman-applet
 
 # --- displays ---
 # docked: monitor only, laptop screen off. undocked: laptop screen back on.
