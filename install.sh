@@ -44,6 +44,7 @@ link kitty
 
 link_bin display-auto
 link_bin display-watch
+link_bin power-auto
 
 echo
 echo "Done. Neovim will install its plugins on first launch."

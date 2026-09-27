@@ -178,3 +178,4 @@ exec --no-startup-id blueman-applet
 # --- displays ---
 # docked: monitor only, laptop screen off. undocked: laptop screen back on.
 exec_always --no-startup-id ~/.local/bin/display-watch
+exec_always --no-startup-id ~/.local/bin/power-auto watch

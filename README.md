@@ -13,13 +13,30 @@ git clone git@github.com:MarcosAsh/dotfiles.git ~/dotfiles
 
 ## Neovim
 
-Needs Neovim 0.9 or newer, plus `ripgrep` for Telescope's live grep and `make` to build `telescope-fzf-native`. `fd` is optional but makes file finding faster.
+Needs Neovim 0.12 or newer (Ubuntu's apt package is too old, use the release tarball), plus `ripgrep` for Telescope's live grep and `make` to build `telescope-fzf-native`. `fd` is optional but makes file finding faster. `bear` generates `compile_commands.json` for clangd in Makefile projects like FFmpeg (`bear -- make`), and `zathura` is the PDF viewer for vimtex.
 
 ```bash
-sudo apt install ripgrep fd-find build-essential
+sudo apt install ripgrep fd-find build-essential bear zathura
+```
+
+nvim-treesitter is on its `main` branch, which compiles parsers with the tree-sitter CLI:
+
+```bash
+curl -fL https://github.com/tree-sitter/tree-sitter/releases/latest/download/tree-sitter-linux-x64.gz \
+    | gunzip > ~/.local/bin/tree-sitter && chmod +x ~/.local/bin/tree-sitter
 ```
 
 Plugins are managed by lazy.nvim, which bootstraps itself on first launch. Versions are pinned in `nvim/lazy-lock.json`.
+
+Language servers, stylua and codelldb are installed by mason on startup. Three things come from elsewhere:
+
+- `ocamllsp` comes from opam so it matches the OxCaml switch: `opam install ocaml-lsp-server.1.19.0+ox2`
+- `clang-format` comes from `uv tool install clang-format`, since mason builds it in a venv and that needs `python3-venv` from apt
+- `gofmt` and `rustfmt` come with Go and rustup
+
+Formatting runs on `:w` through conform, but only where the project has a config for it (`.clang-format`, `pyproject.toml`/`ruff.toml`, `.ocamlformat`, `stylua.toml`), so upstream code without one is left alone. Autosave never formats. `:FormatToggle` turns it off for the session. Indentation is detected per file by vim-sleuth.
+
+Debugging C, C++ and Rust goes through nvim-dap and codelldb. `F5` starts or continues, `F10`/`F11`/`F12` step over, in and out, `<leader>db` sets a breakpoint.
 
 Leader is Space. Press it and wait to get the which-key menu.
 
@@ -92,3 +109,9 @@ curl -fLO https://github.com/ryanoasis/nerd-fonts/releases/latest/download/JetBr
 unzip -o JetBrainsMono.zip && rm JetBrainsMono.zip
 fc-cache -f
 ```
+
+## Power
+
+`bin/power-auto watch` runs from the i3 config and switches the power-profiles-daemon profile whenever a charger is plugged in or pulled out: `performance` on AC, `power-saver` on battery. Change `AC_PROFILE` and `BATTERY_PROFILE` at the top of the script to taste. Framework recommends power-profiles-daemon over TLP on Core Ultra machines, so keep TLP off.
+
+`powerprofilesctl set <profile>` still works by hand. It holds until the next plug or unplug.

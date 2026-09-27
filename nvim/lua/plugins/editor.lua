@@ -32,8 +32,8 @@ return {
         local function map(mode, lhs, rhs, desc)
           vim.keymap.set(mode, lhs, rhs, { buffer = bufnr, desc = desc })
         end
-        map("n", "]h", gs.next_hunk, "Next hunk")
-        map("n", "[h", gs.prev_hunk, "Previous hunk")
+        map("n", "]h", function() gs.nav_hunk("next") end, "Next hunk")
+        map("n", "[h", function() gs.nav_hunk("prev") end, "Previous hunk")
         map("n", "<leader>gp", gs.preview_hunk, "Preview hunk")
         map("n", "<leader>gb", gs.blame_line, "Blame line")
         map("n", "<leader>gr", gs.reset_hunk, "Reset hunk")
@@ -49,8 +49,11 @@ return {
       spec = {
         { "<leader>a", group = "claude" },
         { "<leader>b", group = "buffer" },
+        { "<leader>c", group = "code" },
+        { "<leader>d", group = "debug" },
         { "<leader>f", group = "find" },
         { "<leader>g", group = "git" },
+        { "<localleader>l", group = "vimtex" },
       },
     },
   },
@@ -75,12 +78,10 @@ return {
     opts = {},
   },
 
+  -- Pick up shiftwidth and expandtab from the file or .editorconfig, so repos
+  -- like FFmpeg (4 spaces) keep their own style instead of the 2 in options.lua
   {
-    "numToStr/Comment.nvim",
-    keys = {
-      { "gc", mode = { "n", "v" } },
-      { "gb", mode = { "n", "v" } },
-    },
-    opts = {},
+    "tpope/vim-sleuth",
+    lazy = false,
   },
 }

@@ -1,0 +1,44 @@
+#!/usr/bin/env bash
+# Match the power profile to the charger.
+#   apply   set the profile for whatever the charger is doing right now (default)
+#   watch   apply, then again every time a charger comes or goes
+#
+# power-saver on battery cuts idle draw by several watts on the Framework 13.
+set -uo pipefail
+
+AC_PROFILE=performance
+BATTERY_PROFILE=power-saver
+
+on_ac() {
+    local s
+    for s in /sys/class/power_supply/*/; do
+        [ "$(cat "$s/type" 2>/dev/null)" = Mains ] || continue
+        [ "$(cat "$s/online" 2>/dev/null)" = 1 ] && return 0
+    done
+    return 1
+}
+
+apply() {
+    local want
+    on_ac && want=$AC_PROFILE || want=$BATTERY_PROFILE
+    [ "$(powerprofilesctl get)" = "$want" ] || powerprofilesctl set "$want"
+}
+
+case "${1:-apply}" in
+    apply) apply ;;
+    watch)
+        exec 9>"${XDG_RUNTIME_DIR:-/tmp}/power-auto.lock"
+        flock -n 9 || exit 0   # already watching (i3 restart re-runs exec_always)
+
+        apply
+
+        # battery updates arrive every few seconds, only charger changes matter
+        upower --monitor 9>&- |
+            grep --line-buffered 'line_power' 9>&- |
+            while read -r _; do
+                while read -r -t 1 _; do :; done   # swallow the rest of the burst
+                apply
+            done
+        ;;
+    *) echo "usage: ${0##*/} [apply|watch]" >&2; exit 2 ;;
+esac
