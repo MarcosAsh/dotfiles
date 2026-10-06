@@ -1,0 +1,11 @@
+[Unit]
+Description=Back up home to the gaming PC with restic
+ConditionACPower=true
+
+[Service]
+Type=oneshot
+# Skip quietly when away from home and the gaming PC can't be reached.
+ExecCondition=/usr/bin/ssh -o BatchMode=yes -o ConnectTimeout=5 marcos@192.168.0.219 true
+ExecStart=%h/.local/bin/backup run
+Nice=19
+IOSchedulingClass=idle

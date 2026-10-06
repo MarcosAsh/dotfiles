@@ -1,0 +1,19 @@
+# Things that can be downloaded or rebuilt. restic expands $HOME in this file.
+$HOME/.cache
+$HOME/Downloads
+$HOME/Xilinx
+$HOME/snap
+$HOME/.local/share/Trash
+$HOME/.opam
+$HOME/.rustup
+$HOME/.cargo/registry
+$HOME/.npm
+$HOME/go/pkg
+
+# Per-project build output and environments
+node_modules
+.venv
+venv
+__pycache__
+_build
+.gradle

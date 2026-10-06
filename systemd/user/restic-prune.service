@@ -1,0 +1,10 @@
+[Unit]
+Description=Drop data from forgotten restic snapshots
+ConditionACPower=true
+
+[Service]
+Type=oneshot
+ExecCondition=/usr/bin/ssh -o BatchMode=yes -o ConnectTimeout=5 marcos@192.168.0.219 true
+ExecStart=%h/.local/bin/backup prune
+Nice=19
+IOSchedulingClass=idle

@@ -1,6 +1,6 @@
 # dotfiles
 
-Neovim and i3 config for my Ubuntu laptop.
+Neovim, i3, shell and git config for my Ubuntu laptop, plus its backups.
 
 ## Install
 
@@ -9,7 +9,7 @@ git clone git@github.com:MarcosAsh/dotfiles.git ~/dotfiles
 ~/dotfiles/install.sh
 ```
 
-`install.sh` symlinks `nvim`, `i3`, `i3status` and `kitty` into `~/.config`, and the scripts in `bin` into `~/.local/bin`. Anything already there gets moved aside with a `.bak` suffix rather than overwritten.
+`install.sh` symlinks `nvim`, `i3`, `i3status`, `kitty`, the restic excludes and the systemd user units into `~/.config`, `bashrc` and `gitconfig` into `~`, and the scripts in `bin` into `~/.local/bin`. Anything already there gets moved aside with a `.bak` suffix rather than overwritten.
 
 ## Neovim
 
@@ -115,3 +115,28 @@ fc-cache -f
 `bin/power-auto watch` runs from the i3 config and switches the power-profiles-daemon profile whenever a charger is plugged in or pulled out: `performance` on AC, `power-saver` on battery. Change `AC_PROFILE` and `BATTERY_PROFILE` at the top of the script to taste. Framework recommends power-profiles-daemon over TLP on Core Ultra machines, so keep TLP off.
 
 `powerprofilesctl set <profile>` still works by hand. It holds until the next plug or unplug.
+
+## Backups
+
+`bin/backup` runs restic against a repo on the gaming PC (`marcos@192.168.0.219:~/backups/bombopulus`) over SFTP. The `restic-backup` timer runs it every 4 hours and `restic-prune` cleans up on Sundays. Both skip when the laptop is on battery or the gaming PC isn't reachable, so being away from home doesn't leave failed units. Snapshots are kept hourly for a day, then daily for 2 weeks, weekly for 2 months and monthly for a year.
+
+restic isn't in apt on this machine, so it comes from the release:
+
+```bash
+v=0.19.1
+curl -fLO https://github.com/restic/restic/releases/download/v$v/restic_${v}_linux_amd64.bz2
+bunzip2 restic_${v}_linux_amd64.bz2 && install -m 755 restic_${v}_linux_amd64 ~/.local/bin/restic
+```
+
+The repo password lives in `~/.config/restic/password` and is deliberately not in this repo. Keep a copy somewhere else, because without it the backups can't be read.
+
+`restic/excludes` leaves out anything that can be downloaded or rebuilt: caches, `Downloads`, the Xilinx install, toolchains, `node_modules` and virtualenvs. Cargo `target` directories are skipped through `--exclude-caches`.
+
+Anything after `backup` other than `run` or `prune` goes straight to restic:
+
+```bash
+backup snapshots
+backup restore latest --target /tmp/restore --include ~/dev/some-project
+systemctl --user start restic-backup     # back up now
+journalctl --user -u restic-backup       # see how the last run went
+```

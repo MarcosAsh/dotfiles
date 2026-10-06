@@ -1,0 +1,25 @@
+#!/usr/bin/env bash
+# Back up home to the gaming PC with restic. The restic-backup timer runs
+# "backup run", anything else is passed straight to restic, so
+# "backup snapshots" or "backup restore latest --target /tmp/r" work too.
+set -euo pipefail
+
+export RESTIC_REPOSITORY="sftp:marcos@192.168.0.219:/home/marcos/backups/bombopulus"
+export RESTIC_PASSWORD_FILE="$HOME/.config/restic/password"
+RESTIC="$HOME/.local/bin/restic"
+EXCLUDES="$HOME/.config/restic/excludes"
+
+case "${1:-run}" in
+    run)
+        "$RESTIC" backup "$HOME" --exclude-file "$EXCLUDES" --exclude-caches \
+            --one-file-system --tag auto
+        "$RESTIC" forget --tag auto --keep-hourly 24 --keep-daily 14 \
+            --keep-weekly 8 --keep-monthly 12
+        ;;
+    prune)
+        "$RESTIC" prune
+        ;;
+    *)
+        exec "$RESTIC" "$@"
+        ;;
+esac
