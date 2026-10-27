@@ -10,8 +10,8 @@ in
     chartVersion = lib.mkOption { type = lib.types.str; default = "10.11.6"; };
     repoURL = lib.mkOption {
       type = lib.types.str;
-      default = "http://192.168.0.201:3000/marcosash/homelab.git";
-      description = "Repo holding cluster/apps. Switch to the GitHub mirror before the Forgejo box is wiped.";
+      default = "git@github.com:MarcosAsh/homelab.git";
+      description = "Repo holding cluster/apps. Private, so Argo CD needs the repo-github Secret (see cluster/README.md).";
     };
     revision = lib.mkOption { type = lib.types.str; default = "main"; };
   };
