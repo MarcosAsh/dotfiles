@@ -52,6 +52,9 @@
       enabledCollectors = [ "systemd" ];
     };
 
+    # Join with `sudo tailscale up` after the first boot
+    services.tailscale.enable = true;
+
     environment.systemPackages = with pkgs; [ git vim htop tmux curl kubectl k9s ];
     environment.variables.KUBECONFIG = "/etc/rancher/k3s/k3s.yaml";
   };

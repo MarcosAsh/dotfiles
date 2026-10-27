@@ -4,7 +4,7 @@
 {
   disko.devices.disk.main = {
     type = "disk";
-    device = "/dev/nvme0n1";
+    device = "/dev/disk/by-id/nvme-PM951_NVMe_SAMSUNG_256GB__S29NNXAH118607";
     content = {
       type = "gpt";
       partitions = {

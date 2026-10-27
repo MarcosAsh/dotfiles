@@ -5,8 +5,8 @@
   options.homelab.k3s = {
     serverAddr = lib.mkOption {
       type = lib.types.str;
-      default = "https://192.168.0.220:6443";
-      description = "API address agents join. Set to the homelab server's IP once it has one.";
+      default = "https://192.168.0.156:6443";
+      description = "API address agents join. The 7040, which keeps the old Proxmox IP.";
     };
     tokenFile = lib.mkOption {
       type = lib.types.path;

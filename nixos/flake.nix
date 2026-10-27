@@ -22,12 +22,18 @@
           modules = [ ./hardware.nix ./configuration.nix ];
         };
 
-        # First k3s server, the Dell OptiPlex 3090 Micro
+        # k3s agent, the Dell OptiPlex 3090 Micro
         homelab = host "homelab";
         # k3s GPU agent, NFS media export, backup disk
         gaming-pc = host "gaming-pc";
-        # k3s agent with the iGPU for Jellyfin, replaces Proxmox
+        # k3s server with Argo CD and the iGPU for Jellyfin, replaces Proxmox
         optiplex-7040 = host "optiplex-7040";
+
+        # USB stick for first boots, SSH in with the laptop key
+        installer = nixpkgs.lib.nixosSystem {
+          inherit system;
+          modules = [ ./hosts/installer ];
+        };
       };
     };
 }

@@ -3,7 +3,9 @@
 { config, lib, pkgs, ... }:
 
 {
-  imports = [ ../../modules/k3s-agent.nix ./disko.nix ];
+  imports = [ ../../modules/k3s-agent.nix ./disko.nix ]
+    # Written by nixos-anywhere --generate-hardware-config on the first install
+    ++ lib.optional (builtins.pathExists ./hardware-configuration.nix) ./hardware-configuration.nix;
 
   networking.hostName = "gaming-pc";
   homelab.k3s.labels = [ "homelab/gpu=nvidia" ];
@@ -21,6 +23,22 @@
   };
   hardware.nvidia-container-toolkit.enable = true;
   nixpkgs.config.allowUnfree = true;
+
+  # Jellyfin mounts the NFS share by this address
+  networking.useNetworkd = true;
+  systemd.network.networks."10-lan" = {
+    matchConfig.MACAddress = "74:56:3c:7c:57:05";
+    address = [ "192.168.0.219/24" ];
+    gateway = [ "192.168.0.1" ];
+    dns = [ "1.1.1.1" "9.9.9.9" ];
+  };
+
+  # The Samsung 980, kept across the reinstall. Mounted by filesystem UUID, never formatted.
+  fileSystems."/srv/pve-backup" = {
+    device = "/dev/disk/by-uuid/2f5e8b1e-0518-4c4e-8759-6ea7c5eebf25";
+    fsType = "ext4";
+    options = [ "noatime" "nofail" ];
+  };
 
   # Jellyfin reads the library over NFS, same export as today
   services.nfs.server = {

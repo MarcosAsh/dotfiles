@@ -1,12 +1,11 @@
 # Wipes the Crucial P3 only. The Samsung 980 (the backup copy) is NOT listed here.
-# Replace the device with the /dev/disk/by-id/ path from `ls -l /dev/disk/by-id` so
-# a renumbered NVMe can never point this at the 980.
+# By serial, not /dev/nvmeXnY: on this board the 980 is nvme0n1 and the Crucial is nvme1n1.
 { ... }:
 
 {
   disko.devices.disk.main = {
     type = "disk";
-    device = "/dev/disk/by-id/REPLACE-WITH-CRUCIAL-P3-ID";
+    device = "/dev/disk/by-id/nvme-CT1000P3PSSD8_2311E6BA8523";
     content = {
       type = "gpt";
       partitions = {
