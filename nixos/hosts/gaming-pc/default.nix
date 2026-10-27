@@ -8,6 +8,11 @@
     ++ lib.optional (builtins.pathExists ./hardware-configuration.nix) ./hardware-configuration.nix;
 
   networking.hostName = "gaming-pc";
+
+  # The Crucial P3 drops off the bus in its deep NVMe power states (took the PC down twice on
+  # 27 Sep 2026). Keep APST off and don't let powertop touch this box.
+  boot.kernelParams = [ "nvme_core.default_ps_max_latency_us=0" ];
+  powerManagement.powertop.enable = lib.mkForce false;
   homelab.k3s.labels = [ "homelab/gpu=nvidia" "gpu=nvidia" ];
 
   boot.initrd.availableKernelModules = [ "xhci_pci" "ahci" "nvme" "usbhid" "usb_storage" "sd_mod" ];
