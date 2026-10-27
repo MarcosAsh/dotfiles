@@ -37,6 +37,10 @@ in
           configs:
             params:
               server.insecure: true
+          # Sync and health per app, for the Grafana overview
+          controller:
+            metrics:
+              enabled: true
         '';
       };
     };

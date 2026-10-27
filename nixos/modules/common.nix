@@ -50,8 +50,19 @@
       enable = true;
       port = 9100;
       openFirewall = true;
-      enabledCollectors = [ "systemd" ];
+      # perf: CPU cache, IPC and branch counters for the deep CPU panels
+      enabledCollectors = [ "systemd" "perf" ];
     };
+    # perf counters need CAP_PERFMON (perf_event_paranoid is 2)
+    systemd.services.prometheus-node-exporter.serviceConfig = {
+      AmbientCapabilities = [ "CAP_PERFMON" ];
+      CapabilityBoundingSet = lib.mkForce [ "CAP_PERFMON" ];
+    };
+    # RAPL energy counters are root-only because of the Platypus side channel. Nobody untrusted
+    # runs code on these boxes, so let node-exporter read them for the power panels.
+    services.udev.extraRules = ''
+      ACTION=="add", SUBSYSTEM=="powercap", RUN+="${pkgs.coreutils}/bin/chmod 0444 /sys%p/energy_uj"
+    '';
 
     # Join with `sudo tailscale up` after the first boot
     services.tailscale.enable = true;
