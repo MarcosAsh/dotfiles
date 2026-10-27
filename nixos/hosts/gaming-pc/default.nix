@@ -8,7 +8,7 @@
     ++ lib.optional (builtins.pathExists ./hardware-configuration.nix) ./hardware-configuration.nix;
 
   networking.hostName = "gaming-pc";
-  homelab.k3s.labels = [ "homelab/gpu=nvidia" ];
+  homelab.k3s.labels = [ "homelab/gpu=nvidia" "gpu=nvidia" ];
 
   boot.initrd.availableKernelModules = [ "xhci_pci" "ahci" "nvme" "usbhid" "usb_storage" "sd_mod" ];
   boot.kernelModules = [ "kvm-amd" ];
