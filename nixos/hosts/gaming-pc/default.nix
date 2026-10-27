@@ -3,7 +3,7 @@
 { config, lib, pkgs, ... }:
 
 {
-  imports = [ ../../modules/k3s-agent.nix ./disko.nix ]
+  imports = [ ../../modules/k3s-agent.nix ./disko.nix ./pe-bench.nix ]
     # Written by nixos-anywhere --generate-hardware-config on the first install
     ++ lib.optional (builtins.pathExists ./hardware-configuration.nix) ./hardware-configuration.nix;
 
