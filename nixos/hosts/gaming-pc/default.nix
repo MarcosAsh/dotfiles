@@ -15,6 +15,11 @@
   powerManagement.powertop.enable = lib.mkForce false;
   homelab.k3s.labels = [ "homelab/gpu=nvidia" "gpu=nvidia" ];
 
+  # The cluster backup (cluster/backups in the homelab repo) writes its restic repo here over
+  # sftp. Its key only does sftp and only from the OptiPlex. create-secret.sh writes the .pub.
+  users.users.marcos.openssh.authorizedKeys.keys = lib.optional (builtins.pathExists ./cluster-backup.pub)
+    ''restrict,command="internal-sftp",from="192.168.0.156" ${lib.fileContents ./cluster-backup.pub}'';
+
   boot.initrd.availableKernelModules = [ "xhci_pci" "ahci" "nvme" "usbhid" "usb_storage" "sd_mod" ];
   boot.kernelModules = [ "kvm-amd" ];
   hardware.cpu.amd.updateMicrocode = true;
