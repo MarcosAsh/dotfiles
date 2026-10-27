@@ -21,6 +21,9 @@
   };
 
   config = {
+    # Pods mount NFS volumes (Jellyfin's library), which needs mount.nfs on the node
+    boot.supportedFilesystems = [ "nfs" ];
+
     services.k3s = {
       tokenFile = config.homelab.k3s.tokenFile;
       nodeLabel = config.homelab.k3s.labels;
