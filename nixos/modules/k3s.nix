@@ -28,6 +28,13 @@
       tokenFile = config.homelab.k3s.tokenFile;
       nodeLabel = config.homelab.k3s.labels;
     };
+    # The in-cluster registry (cluster/registry) is plain http on the LAN
+    environment.etc."rancher/k3s/registries.yaml".text = ''
+      mirrors:
+        "registry.home.arpa:30500":
+          endpoint: ["http://192.168.0.156:30500"]
+    '';
+
     # API, kubelet, flannel vxlan, ssh stays open from common.nix
     networking.firewall.allowedTCPPorts = [ 6443 10250 ];
     networking.firewall.allowedUDPPorts = [ 8472 ];
