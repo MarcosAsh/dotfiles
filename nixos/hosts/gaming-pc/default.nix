@@ -30,6 +30,9 @@
     nvidiaPersistenced = true;
   };
   hardware.nvidia-container-toolkit.enable = true;
+  # k3s registers the nvidia and nvidia-cdi runtimes when it finds these on its PATH.
+  # nvidia-cdi injects the driver from the CDI spec NixOS writes to /var/run/cdi.
+  systemd.services.k3s.path = [ pkgs.nvidia-container-toolkit.tools ];
   nixpkgs.config.allowUnfree = true;
 
   # Jellyfin mounts the NFS share by this address
