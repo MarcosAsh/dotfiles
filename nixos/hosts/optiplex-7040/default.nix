@@ -26,7 +26,7 @@
   networking.resolvconf.enable = false;
   environment.etc."resolv.conf".text = "nameserver 1.1.1.1\nnameserver 9.9.9.9\noptions edns0\n";
   networking.firewall.allowedTCPPorts = [ 53 80 443 8081 ];
-  networking.firewall.allowedUDPPorts = [ 53 67 ];
+  networking.firewall.allowedUDPPorts = [ 53 67 123 ];
   systemd.network.networks."10-lan" = {
     matchConfig.MACAddress = "64:00:6a:79:75:c5";
     address = [ "192.168.0.156/24" ];
