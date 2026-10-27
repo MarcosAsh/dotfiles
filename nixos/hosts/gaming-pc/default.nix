@@ -43,6 +43,9 @@
     options = [ "noatime" "nofail" ];
   };
 
+  # Library folder, owned by marcos so downloads can land there
+  systemd.tmpfiles.rules = [ "d /srv/media/library 0755 marcos users -" "d /srv/media/library/Movies 0755 marcos users -" ];
+
   # Jellyfin reads the library over NFS, same export as today
   services.nfs.server = {
     enable = true;
