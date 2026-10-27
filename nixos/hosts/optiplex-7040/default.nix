@@ -19,6 +19,14 @@
   # so the name the NIC gets doesn't matter. DNS is public, not Pi-hole, because
   # Pi-hole runs in this cluster.
   networking.useNetworkd = true;
+  # Pi-hole runs on the host network here and serves DNS (53) and DHCP (67) for the house,
+  # so resolved must not hold port 53. The box itself asks public resolvers.
+  services.resolved.enable = false;
+  # networkd only hands its DNS to resolved, so write resolv.conf ourselves (CoreDNS reads it)
+  networking.resolvconf.enable = false;
+  environment.etc."resolv.conf".text = "nameserver 1.1.1.1\nnameserver 9.9.9.9\noptions edns0\n";
+  networking.firewall.allowedTCPPorts = [ 53 80 443 8081 ];
+  networking.firewall.allowedUDPPorts = [ 53 67 ];
   systemd.network.networks."10-lan" = {
     matchConfig.MACAddress = "64:00:6a:79:75:c5";
     address = [ "192.168.0.156/24" ];
