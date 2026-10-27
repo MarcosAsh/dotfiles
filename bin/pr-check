@@ -1,0 +1,79 @@
+#!/usr/bin/env python3
+"""Shows the Mac mini's Metal result for a keras-mlx branch, and how to review its diff.
+
+    pr-check BRANCH            the latest result for BRANCH
+    pr-check BRANCH --queue    ask the Mac to test BRANCH at its next half-hour check
+    pr-check BRANCH --log      also print the end of the pytest log
+
+The Mac tests branches pushed to Forgejo (git.home.arpa), see
+~/dev/homelab/keras-mlx-branch/mac/branch_ci.py.
+"""
+
+import argparse
+import json
+import os
+import subprocess
+import sys
+import urllib.parse
+
+MAC = "marcoss-mac-mini"
+REPO = "~/dev/keras-mlx"
+
+
+def mac(command):
+    return subprocess.run(["ssh", MAC, command], capture_output=True, text=True)
+
+
+def local_sha(branch):
+    for ref in (branch, f"forgejo/{branch}"):
+        out = subprocess.run(["git", "-C", os.path.expanduser(REPO), "rev-parse", "--verify", "-q", ref],
+                             capture_output=True, text=True)
+        if out.returncode == 0:
+            return out.stdout.strip()
+    return None
+
+
+def main():
+    parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
+    parser.add_argument("branch")
+    parser.add_argument("--queue", action="store_true", help="test it at the next half-hour check")
+    parser.add_argument("--log", action="store_true", help="print the end of the pytest log")
+    args = parser.parse_args()
+    name = urllib.parse.quote(args.branch, safe="")
+
+    if args.queue:
+        mac(f"mkdir -p ~/branch-ci/queue && touch ~/branch-ci/queue/{name}")
+        print(f"Queued {args.branch}. The Mac picks it up within half an hour, but not 00:20 to 03:45.")
+
+    out = mac(f"cat ~/branch-ci/results/{name}/latest.json")
+    if out.returncode:
+        print(f"No result for {args.branch} yet. Push it to Forgejo, or run with --queue.")
+    else:
+        r = json.loads(out.stdout)
+        c = r["counts"]
+        print(f"{r['branch']} at {r['sha'][:9]}, tested {r['tested_at']} in {r['duration_seconds'] // 60} min")
+        print(f"  keras {r['keras_commit']}, mlx {r['mlx_version']}, compared with main at {r['base'][:9]}")
+        if not r["run_ok"]:
+            print("  SETUP FAILED, the plugin didn't load. See the log.")
+        print(f"  {c['passed']} passed, {c['failed'] + c['error']} failing, {c['skipped']} skipped")
+        print(f"  {len(r['new_failures'])} new failures, {len(r['fixed'])} fixed compared with main")
+        for test in r["new_failures"][:25]:
+            print(f"    {test}")
+        if len(r["new_failures"]) > 25:
+            print(f"    ... and {len(r['new_failures']) - 25} more")
+        sha = local_sha(args.branch)
+        if sha and sha != r["sha"]:
+            print(f"  Your local {args.branch} is at {sha[:9]}, which the Mac hasn't tested.")
+        if args.log:
+            print(mac(f"tail -40 {r['log']}").stdout)
+
+    print()
+    print("Review the diff:")
+    print(f"  cd {REPO} && claude --agent hertschuh 'Review the diff of {args.branch} against "
+          f"origin/main (git diff origin/main...{args.branch}) the way hertschuh would'")
+    print("If the branch depends on an mlx change, review that one too:")
+    print("  cd ~/dev/mlx && claude --agent zcbenz 'Review my uncommitted mlx change the way zcbenz would'")
+
+
+if __name__ == "__main__":
+    sys.exit(main())
