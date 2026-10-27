@@ -61,5 +61,24 @@
       /srv/media/library 192.168.0.0/24(ro,no_subtree_check,all_squash)
     '';
   };
-  networking.firewall.allowedTCPPorts = [ 2049 ];
+  networking.firewall.allowedTCPPorts = [ 2049 9835 ];
+
+  # GPU exporter for Prometheus on :9835 (gpu-exporter.py). nvidia-smi segfaults on this
+  # driver build, so it reads NVML directly. Root so it can name the pod or service behind
+  # each GPU process.
+  systemd.services.gpu-exporter = {
+    description = "Prometheus exporter for the GPU through NVML";
+    wantedBy = [ "multi-user.target" ];
+    after = [ "nvidia-persistenced.service" ];
+    environment.LD_LIBRARY_PATH = "/run/opengl-driver/lib";
+    serviceConfig = {
+      ExecStart = "${pkgs.python3.withPackages (p: [ p.nvidia-ml-py ])}/bin/python3 -u ${./gpu-exporter.py}";
+      Restart = "always";
+      RestartSec = 10;
+      ProtectSystem = "strict";
+      ProtectHome = "read-only";
+      PrivateTmp = true;
+      NoNewPrivileges = true;
+    };
+  };
 }
