@@ -27,6 +27,9 @@
   environment.etc."resolv.conf".text = "nameserver 1.1.1.1\nnameserver 9.9.9.9\noptions edns0\n";
   networking.firewall.allowedTCPPorts = [ 53 80 443 8081 ];
   networking.firewall.allowedUDPPorts = [ 53 67 123 ];
+  # Subnet router for the house, so home.arpa works away from home. Join with
+  # `tailscale up --advertise-routes=192.168.0.0/24`, then approve the route in the admin page.
+  services.tailscale.useRoutingFeatures = "server";
   systemd.network.networks."10-lan" = {
     matchConfig.MACAddress = "64:00:6a:79:75:c5";
     address = [ "192.168.0.156/24" ];
