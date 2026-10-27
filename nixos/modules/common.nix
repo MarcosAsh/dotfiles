@@ -1,6 +1,8 @@
 { config, lib, pkgs, ... }:
 
 {
+  imports = [ ./minimal.nix ./power.nix ];
+
   options.homelab.sshKeys = lib.mkOption {
     type = lib.types.listOf lib.types.str;
     default = [
@@ -19,7 +21,6 @@
 
     boot.loader.systemd-boot.enable = true;
     boot.loader.efi.canTouchEfiVariables = true;
-    hardware.enableRedistributableFirmware = true;
     zramSwap.enable = true;
 
     users.users.marcos = {
@@ -55,7 +56,8 @@
     # Join with `sudo tailscale up` after the first boot
     services.tailscale.enable = true;
 
-    environment.systemPackages = with pkgs; [ git vim htop tmux curl kubectl k9s ];
+    # k3s already ships kubectl. k9s runs on the laptop against the same kubeconfig.
+    environment.systemPackages = with pkgs; [ htop ];
     environment.variables.KUBECONFIG = "/etc/rancher/k3s/k3s.yaml";
   };
 }

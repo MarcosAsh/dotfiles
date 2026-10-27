@@ -20,6 +20,9 @@
     open = true; # Blackwell only works with the open modules
     modesetting.enable = true;
     package = config.boot.kernelPackages.nvidiaPackages.latest;
+    nvidiaSettings = false; # GUI tool, headless box
+    # Keeps the driver loaded so the idle card sits in P8 instead of re-initialising per job
+    nvidiaPersistenced = true;
   };
   hardware.nvidia-container-toolkit.enable = true;
   nixpkgs.config.allowUnfree = true;

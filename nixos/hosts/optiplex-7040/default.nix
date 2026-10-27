@@ -13,7 +13,7 @@
   boot.initrd.availableKernelModules = [ "xhci_pci" "ahci" "nvme" "usb_storage" "sd_mod" ];
   boot.kernelModules = [ "kvm-intel" ];
   hardware.cpu.intel.updateMicrocode = true;
-  hardware.graphics.enable = true;
+  # The i915 kernel driver is enough: Jellyfin's image ships its own VAAPI/QSV userspace
 
   # Keeps the Proxmox address, agents and Pi-hole records point at it. Matched by MAC
   # so the name the NIC gets doesn't matter. DNS is public, not Pi-hole, because
