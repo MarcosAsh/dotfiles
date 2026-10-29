@@ -15,6 +15,20 @@
   powerManagement.powertop.enable = lib.mkForce false;
   homelab.k3s.labels = [ "homelab/gpu=nvidia" "gpu=nvidia" ];
 
+  # Ran out of memory on 29 Oct 2026 (Isabelle, Lattice, host boolector runs and a nix build) and
+  # froze in zram swap with no OOM kill. The kubelet now evicts pods first, and earlyoom kills
+  # the biggest process before the box stalls.
+  services.k3s.extraFlags = [
+    "--kubelet-arg=system-reserved=memory=2Gi"
+    "--kubelet-arg=eviction-hard=memory.available<1500Mi"
+  ];
+  services.earlyoom = {
+    enable = true;
+    freeMemThreshold = 4;
+    freeSwapThreshold = 10;
+    extraArgs = [ "--avoid" "^(k3s|containerd|sshd|systemd.*|sddm|kwin_wayland|sunshine)$" ];
+  };
+
   # The cluster backup (cluster/backups in the homelab repo) writes its restic repo here over
   # sftp. Its key only does sftp and only from the OptiPlex. create-secret.sh writes the .pub.
   users.users.marcos.openssh.authorizedKeys.keys = lib.optional (builtins.pathExists ./cluster-backup.pub)
