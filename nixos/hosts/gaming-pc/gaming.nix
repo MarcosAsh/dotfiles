@@ -1,6 +1,7 @@
 # Game streaming. Plasma logs in on the monitor's spare input, Sunshine streams it to Moonlight
 # on the laptop. Starting the Steam app runs game-mode on (drain this node, boost on, GPU clock
-# up), ending the stream runs game-mode off. Boost stays off otherwise.
+# up, SSH-launched jobs to idle CPU priority, /run/game-mode for other tools to check), ending
+# the stream runs game-mode off. Boost stays off otherwise.
 { config, lib, pkgs, ... }:
 
 let
@@ -15,9 +16,16 @@ let
 
   gameMode = pkgs.writeShellApplication {
     name = "game-mode";
-    runtimeInputs = [ pkgs.openssh ];
+    runtimeInputs = [ pkgs.openssh pkgs.systemd pkgs.gawk pkgs.coreutils ];
     text = ''
       dir=/var/lib/game-mode
+      # remote logins only, the desktop on seat0 keeps its priority
+      ssh_jobs() {
+        for s in $(loginctl list-sessions --no-legend | awk '{print $1}'); do
+          [ -z "$(loginctl show-session "$s" -p Seat --value)" ] || continue
+          systemctl set-property --runtime "session-$s.scope" CPUWeight="$1" || true
+        done
+      }
       node() {
         ssh -i "$dir/id_ed25519" -o BatchMode=yes -o ConnectTimeout=5 \
           -o UserKnownHostsFile="$dir/known_hosts" -o StrictHostKeyChecking=accept-new \
@@ -25,6 +33,8 @@ let
       }
       case "''${1:-}" in
         on)
+          touch /run/game-mode
+          ssh_jobs idle
           node on || echo "could not drain gaming-pc, the jobs keep running" >&2
           echo 1 > /sys/devices/system/cpu/cpufreq/boost
           ${gpuCap} ${toString gameClock}
@@ -32,10 +42,13 @@ let
         off)
           echo 0 > /sys/devices/system/cpu/cpufreq/boost
           ${gpuCap} ${toString batchClock}
+          ssh_jobs 100
+          rm -f /run/game-mode
           node off
           ;;
+        idle) ssh_jobs idle ;;
         *)
-          echo "usage: game-mode on|off" >&2
+          echo "usage: game-mode on|off|idle" >&2
           exit 1
           ;;
       esac
@@ -68,6 +81,15 @@ in
     '';
   };
   environment.systemPackages = [ gameMode ];
+  # SSH jobs started mid-game get idle priority too
+  systemd.services.game-mode-idle = {
+    unitConfig.ConditionPathExists = "/run/game-mode";
+    serviceConfig = { Type = "oneshot"; ExecStart = "${gameMode}/bin/game-mode idle"; };
+  };
+  systemd.timers.game-mode-idle = {
+    wantedBy = [ "timers.target" ];
+    timerConfig = { OnBootSec = "1min"; OnUnitActiveSec = "30s"; };
+  };
 
   services.desktopManager.plasma6.enable = true;
   services.displayManager = {
