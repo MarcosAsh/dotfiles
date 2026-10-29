@@ -1,7 +1,26 @@
 # Dell OptiPlex 7040 Micro, i5-6500T, 16 GB. Replaces Proxmox. The k3s server, and
 # owns the iGPU, so Jellyfin lands here.
-{ lib, ... }:
+{ config, lib, pkgs, ... }:
 
+let
+  # Game mode on the gaming PC (hosts/gaming-pc/gaming.nix) drains and uncordons that node
+  # through this forced command. pc-queue is stopped first so its preStop can't uncordon the
+  # node mid-game, and a deliberate stop doesn't count as a failed try.
+  gamingNode = pkgs.writeShellScript "gaming-node" ''
+    kubectl() { ${config.services.k3s.package}/bin/k3s kubectl "$@"; }
+    case "$SSH_ORIGINAL_COMMAND" in
+      on)
+        if kubectl -n isabelle get pods -l app=pc-queue --field-selector status.phase=Running -o name | grep -q .; then
+          kubectl -n isabelle exec deploy/pc-queue -- python3 scripts/pc_queue.py stop || true
+        fi
+        kubectl drain gaming-pc --ignore-daemonsets --delete-emptydir-data --timeout=120s
+        ;;
+      off) kubectl uncordon gaming-pc ;;
+      *) echo "on or off" >&2; exit 1 ;;
+    esac
+  '';
+  gameKey = ../gaming-pc/game-mode.pub;
+in
 {
   imports = [ ../../modules/k3s-server.nix ./disko.nix ]
     # Written by nixos-anywhere --generate-hardware-config on the first install
@@ -9,6 +28,8 @@
 
   networking.hostName = "optiplex-7040";
   homelab.k3s.labels = [ "homelab/igpu=true" ];
+  users.users.root.openssh.authorizedKeys.keys = lib.optional (builtins.pathExists gameKey)
+    ''restrict,command="${gamingNode}",from="192.168.0.219" ${lib.fileContents gameKey}'';
 
   boot.initrd.availableKernelModules = [ "xhci_pci" "ahci" "nvme" "usb_storage" "sd_mod" ];
   boot.kernelModules = [ "kvm-intel" ];

@@ -3,7 +3,7 @@
 { config, lib, pkgs, ... }:
 
 {
-  imports = [ ../../modules/k3s-agent.nix ./disko.nix ./pe-bench.nix ]
+  imports = [ ../../modules/k3s-agent.nix ./disko.nix ./pe-bench.nix ./gaming.nix ]
     # Written by nixos-anywhere --generate-hardware-config on the first install
     ++ lib.optional (builtins.pathExists ./hardware-configuration.nix) ./hardware-configuration.nix;
 
@@ -71,19 +71,6 @@
     '';
   };
   networking.firewall.allowedTCPPorts = [ 2049 9835 ];
-
-  # GPU power cap while the case runs hot (gpu-power-cap.py), set again at every boot
-  systemd.services.gpu-power-cap = {
-    description = "Cap the GPU at 250 W and 2400 MHz";
-    wantedBy = [ "multi-user.target" ];
-    after = [ "nvidia-persistenced.service" ];
-    environment.LD_LIBRARY_PATH = "/run/opengl-driver/lib";
-    serviceConfig = {
-      Type = "oneshot";
-      RemainAfterExit = true;
-      ExecStart = "${pkgs.python3.withPackages (p: [ p.nvidia-ml-py ])}/bin/python3 -u ${./gpu-power-cap.py}";
-    };
-  };
 
   # GPU exporter for Prometheus on :9835 (gpu-exporter.py). nvidia-smi segfaults on this
   # driver build, so it reads NVML directly. Root so it can name the pod or service behind
