@@ -57,7 +57,11 @@
   };
 
   # Library folder, owned by marcos so downloads can land there
-  systemd.tmpfiles.rules = [ "d /srv/media/library 0755 marcos users -" "d /srv/media/library/Movies 0755 marcos users -" ];
+  systemd.tmpfiles.rules = [ "d /srv/media/library 0755 marcos users -" "d /srv/media/library/Movies 0755 marcos users -" ]
+    # The Isabelle queue pod (homelab cluster/isabelle) turns boost off and the governor to
+    # performance for its timed stages, through a hostPath mount of these files
+    ++ map (f: "z /sys/devices/system/cpu/cpufreq/${f} 0664 root users -")
+      [ "boost" "policy*/scaling_governor" "policy*/energy_performance_preference" ];
 
   # Jellyfin reads the library over NFS, same export as today
   services.nfs.server = {
