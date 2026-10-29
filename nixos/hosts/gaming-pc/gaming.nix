@@ -96,7 +96,10 @@ in
     settings = {
       sunshine_name = "gaming-pc";
       capture = "kms";
-      encoder = "nvenc";
+      # NVENC can't load libcuda under the capSysAdmin wrapper, Vulkan encode runs on the 5070 Ti too
+      encoder = "vulkan";
+      csrf_allowed_origins = lib.concatMapStringsSep "," (h: "https://${h}:47990")
+        [ "192.168.0.219" "gaming-pc" "gaming-pc.home.arpa" ];
     };
     applications.apps = [
       { name = "Desktop"; image-path = "desktop.png"; }
