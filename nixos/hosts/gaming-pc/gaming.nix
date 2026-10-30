@@ -101,6 +101,16 @@ in
   # and no power-profiles-daemon overriding the EPP set in modules/power.nix
   systemd.targets = lib.genAttrs [ "sleep" "suspend" "hibernate" "hybrid-sleep" ] (_: { enable = false; });
   environment.etc."xdg/kscreenlockerrc".text = "[Daemon]\nAutolock=false\nLockOnResume=false\n";
+  # Plasma blanks DP-1 after 10 idle minutes, which disables the connector, and Sunshine's KMS
+  # capture then finds no monitor and gives up until restarted (30 Oct 2026)
+  environment.etc."xdg/powerdevilrc".text = ''
+    [AC][Display]
+    DimDisplayWhenIdle=false
+    TurnOffDisplayWhenIdle=false
+
+    [AC][SuspendAndShutdown]
+    AutoSuspendAction=0
+  '';
   environment.etc."xdg/baloofilerc".text = "[Basic Settings]\nIndexing-Enabled=false\n";
   services.power-profiles-daemon.enable = false;
   # modules/minimal.nix strips what a desktop needs
