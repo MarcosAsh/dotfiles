@@ -16,6 +16,11 @@ bindsym $mod+Shift+q kill
 bindsym $mod+d exec --no-startup-id i3-dmenu-desktop
 bindsym $mod+Shift+d exec --no-startup-id dmenu_run
 
+# --- screenshots ---
+# drag a box, saved to ~/Pictures and copied to the clipboard
+bindsym Print exec --no-startup-id maim -s | tee ~/Pictures/$(date +%F_%H-%M-%S).png | xclip -selection clipboard -t image/png
+bindsym Shift+Print exec --no-startup-id maim | tee ~/Pictures/$(date +%F_%H-%M-%S).png | xclip -selection clipboard -t image/png
+
 # --- focus ---
 bindsym $mod+h focus left
 bindsym $mod+j focus down
@@ -167,7 +172,7 @@ bar {
 }
 
 # --- autostart ---
-exec_always --no-startup-id feh --bg-fill ~/Pictures/wallpapers/wp13008112.jpg
+exec_always --no-startup-id feh --no-fehbg --bg-fill ~/Pictures/wallpapers/mew/mew-bubble-2560.png
 exec --no-startup-id dunst
 # keep the screen awake: no blanking, no DPMS power-off
 exec_always --no-startup-id xset s off -dpms
